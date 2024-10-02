@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+service PaymentService {
+    rpc PurchasePayment(PaymentRequest) returns (PaymentResponse);
+    rpc SuccessPayment(SuccessPaymentRequest) returns (SuccessPaymentResponse);
+}
+
+message SuccessPaymentRequest {
+    string sessionId = 1;
+} 
+
+message SuccessPaymentResponse {
+    string courseId = 1;
+    string userId = 2;
+    string tutorId = 3;
+    string category = 4;
+    string thumbnail = 5;
+    string title = 6;
+    string price = 7;
+    string level = 8;
+    string totalLessons = 9;
+    string discourtPrice = 10;
+}
+
+message PaymentRequest {
+    string courseId = 1;
+    string userId = 2;
+    string tutorId = 3;
+    string category = 4;
+    string thumbnail = 5;
+    string title = 6;
+    string price = 7;
+    string level = 8;
+    string totalLessons = 9;
+    string discourtPrice = 10;
+}
+
+message PaymentResponse {
+    string session_id = 1;          // Change this to sessionId for consistency
+}

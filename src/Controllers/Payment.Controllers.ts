@@ -1,6 +1,6 @@
 import { handleUnaryCall } from '@grpc/grpc-js';
 import * as grpc from '@grpc/grpc-js';
-import { OrderService } from "../Use.case/Order.Use.case";
+import { OrderService } from "../Use.case/Payment.Use.case";
 import { IOrder } from "../Interfaces/IOrder";
 
 class OrderController {
@@ -35,7 +35,20 @@ class OrderController {
         console.log(data, 'data session id')
         const result = await this.orderService.successPayment(data.sessionId);
         console.log(result, 'result from successPayment')
-        callback(null, result)
+        const dataToSend = {
+            courseId: result?.courseId,
+            userId: result?.userId,
+            tutorId: result?.tutorId,
+            category: result?.category,
+            thumbnail: result?.thumbnail,
+            title: result?.title,
+            price: result?.price,
+            level: result?.level,
+            totalLessons: result?.totalLessons,
+            transactionId: result?.transactionId
+          }
+          console.log(dataToSend, 'dta to send')
+        callback(null, dataToSend)
     }
 }
 

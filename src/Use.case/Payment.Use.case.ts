@@ -87,9 +87,9 @@ export class OrderService {
                     thumbnail: session.metadata?.thumbnail,
                     title: session.metadata?.title,
                     price: session.metadata?.price,
-                    discountPrice: session.metadata?.discountPrice,
                     level: session.metadata?.level,
-                    totalLessons: session.metadata?.totalLessons
+                    totalLessons: session.metadata?.totalLessons,
+                    transactionId:sessionId
                 }
                 console.log(orderResponse, 'order resonse from user case')
                 return orderResponse;

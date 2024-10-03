@@ -19,7 +19,7 @@ message SuccessPaymentResponse {
     string price = 7;
     string level = 8;
     string totalLessons = 9;
-    string discourtPrice = 10;
+    string transactionId = 10;
 }
 
 message PaymentRequest {
@@ -32,7 +32,6 @@ message PaymentRequest {
     string price = 7;
     string level = 8;
     string totalLessons = 9;
-    string discourtPrice = 10;
 }
 
 message PaymentResponse {

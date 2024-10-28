@@ -3,8 +3,9 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import Stripe from "stripe";
+import { configs } from "../ENV-Configs/ENV.configs";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+const stripe = new Stripe(configs.STRIPE_SECRET_KEY!);
 
 export class OrderService {
     

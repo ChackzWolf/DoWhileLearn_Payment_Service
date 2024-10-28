@@ -2,13 +2,14 @@ import dotenv from "dotenv";
 import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import path from "path";
-import OrderController  from "./Controllers/Payment.Controllers";
+import OrderController  from "./Controllers/Payment.controllers";
 import express from "express"
 import morgan from 'morgan';
 import winston from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
-import config from "./Configs/Config";
+import { configs } from "./ENV-Configs/ENV.configs";
 import cors from 'cors';
+// import { initializeProducer, sendMessage } from "";
 const app = express();
 app.use(cors({
   origin: 'http://localhost:5173',  // Frontend origin
@@ -18,7 +19,6 @@ app.use(cors({
 app.options('*', cors());  // Allow preflight requests
 
 app.use(express.json());
-
 
 
 
@@ -39,7 +39,7 @@ const logger = winston.createLogger({
       new DailyRotateFile({
         filename: 'logs/application-%DATE%.log',
         datePattern: 'YYYY-MM-DD',
-        maxFiles: '14d' // Keep logs for 14 days
+        maxFiles: configs.LOG_RETENTION_DAYS
       })
     ],
   });
@@ -51,7 +51,7 @@ const logger = winston.createLogger({
 // error log end
 
 const packageDefinition = protoLoader.loadSync(
-    path.join(__dirname, "protos/Payment.proto"),
+    path.join(__dirname, "Protos/Payment.proto"),
     {keepCase:true , longs: String, enums: String , defaults: true, oneofs: true}
 )
 
@@ -59,9 +59,10 @@ const packageDefinition = protoLoader.loadSync(
 const paymentProto = grpc.loadPackageDefinition(packageDefinition) as any;
 
 const server = new grpc.Server();
-const port = config.port;
+const port = configs.PAYMENT_GRPC_PORT;
 
-const grpcServer = () => {
+const grpcServer = async () => {
+
     server.bindAsync(
         `0.0.0.0:${port}`,
         grpc.ServerCredentials.createInsecure(),
@@ -85,3 +86,57 @@ server.addService(paymentProto.PaymentService.service, {
 });
 
 grpcServer(); // Start the gRPC server
+
+
+
+
+// index.ts
+import { PaymentService } from './Utils/Kafka.utils/Kafka';
+import { kafkaConfig } from './ENV-Configs/KafkaConfig';
+export interface OrderEventData {
+  userId: string;
+  tutorId: string;
+  courseId: string;
+  transactionId: string;
+  title: string;
+  thumbnail: string;
+  price: string;
+  adminShare: string; 
+  tutorShare: string;
+  paymentStatus:boolean;
+  timestamp: Date;
+  status: string;
+}
+
+const event: OrderEventData = {
+  transactionId: 'data.transactionId',
+  userId: "data.userId",
+  tutorId: "data.tutorId",
+  courseId: "data.courseId",
+  title: "data.title",
+  thumbnail: "data.thumbnail",
+  price: "data.price",
+  adminShare: "data.adminShare", 
+  tutorShare: "data.tutorShare",
+  paymentStatus:true, 
+  timestamp: new Date(),
+  status: "SUCCESS"
+};
+app.use(express.json());
+
+
+// app.post('/api/purchase', async (req, res) => {
+//   try {
+//     await paymentService.processPurchase(req.body);
+//     res.status(200).json({ message: 'Purchase initiated successfully' });
+//   } catch (error) {
+//     console.error('Purchase error:', error);
+//     res.status(500).json({ error: 'Failed to process purchase' });
+//   }
+// });
+  
+const PORT = configs.PORT || 3007;  
+app.listen(PORT, async() => {
+  console.log(`Payment service running on port ${PORT}`); 
+  await kafkaConfig.sendMessage('payment.success',  event);  
+});          

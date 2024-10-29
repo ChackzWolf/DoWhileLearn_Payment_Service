@@ -91,7 +91,6 @@ grpcServer(); // Start the gRPC server
 
 
 // index.ts
-import { PaymentService } from './Utils/Kafka.utils/Kafka';
 import { kafkaConfig } from './ENV-Configs/KafkaConfig';
 export interface OrderEventData {
   userId: string;
@@ -125,18 +124,8 @@ const event: OrderEventData = {
 app.use(express.json());
 
 
-// app.post('/api/purchase', async (req, res) => {
-//   try {
-//     await paymentService.processPurchase(req.body);
-//     res.status(200).json({ message: 'Purchase initiated successfully' });
-//   } catch (error) {
-//     console.error('Purchase error:', error);
-//     res.status(500).json({ error: 'Failed to process purchase' });
-//   }
-// });
-  
 const PORT = configs.PORT || 3007;  
 app.listen(PORT, async() => {
   console.log(`Payment service running on port ${PORT}`); 
-  await kafkaConfig.sendMessage('payment.success',  event);  
+  // await kafkaConfig.sendMessage('payment.success',  event);  
 });          

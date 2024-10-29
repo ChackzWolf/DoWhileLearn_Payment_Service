@@ -4,6 +4,7 @@ dotenv.config();
 
 import Stripe from "stripe";
 import { configs } from "../ENV-Configs/ENV.configs";
+import { kafkaConfig } from "../ENV-Configs/KafkaConfig";
 
 const stripe = new Stripe(configs.STRIPE_SECRET_KEY!);
 
@@ -77,8 +78,9 @@ export class OrderService {
     async successPayment(sessionId:string){
         try {
             const session = await stripe.checkout.sessions.retrieve(sessionId);
-    
+            
             if (session.payment_status === 'paid') {
+        
                 // Make a request to the Order Service to create the order
                 const orderResponse = {
                     userId: session.metadata?.userId,  // Example of extra value
@@ -92,6 +94,7 @@ export class OrderService {
                     totalLessons: session.metadata?.totalLessons,
                     transactionId:sessionId
                 }
+                await kafkaConfig.sendMessage('payment.success', orderResponse)
                 console.log(orderResponse, 'order resonse from user case')
                 return orderResponse;
             } 

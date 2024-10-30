@@ -2,9 +2,11 @@ import { handleUnaryCall } from '@grpc/grpc-js';
 import * as grpc from '@grpc/grpc-js';
 import { OrderService } from "../Services/Payment.service";
 import { IOrder } from "../Interfaces/IOrder";
+import { KafkaConfig, kafkaConfig } from '../ENV-Configs/KafkaConfig';
 
+const orderService = new OrderService()
 
-class OrderController {
+class PaymentController {
     private orderService: OrderService;
 
     constructor() {
@@ -48,12 +50,12 @@ class OrderController {
             price: result?.price,
             level: result?.level,
             totalLessons: result?.totalLessons,
-            transactionId: result?.transactionId
+            transactionId: data.sessionId
           }
-        console.log(dataToSend, 'dta to send')
+        console.log(dataToSend, 'data to send')
         callback(null, dataToSend)
     }
 }
 
-export default OrderController;
+export default PaymentController;
  

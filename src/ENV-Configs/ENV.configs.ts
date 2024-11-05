@@ -14,6 +14,10 @@ export const configs = {
     STRIPE_SECRET_KEY : process.env.STRIPE_SECRET_KEY || '',
 
     // LOGGER CONFIGS
-    LOG_RETENTION_DAYS : process.env.LOG_RETENTION_DAYS || '7d'
+    LOG_RETENTION_DAYS : process.env.LOG_RETENTION_DAYS || '7d',
+
+    //KAFKA CONFIGS
+    CLIENT_ID: process.env.CLIENT_ID || 'nodejs-kafka',
+    BROKER_1: process.env.BROKER_1 || 'localhost:9092'
 }
 

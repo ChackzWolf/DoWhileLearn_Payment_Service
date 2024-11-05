@@ -26,8 +26,9 @@ app.use(express.json());
 dotenv.config()
 
 
-
 // error log
+
+
 const logger = winston.createLogger({
     level: 'info',
     format: winston.format.combine( 
@@ -87,31 +88,31 @@ server.addService(paymentProto.PaymentService.service, {
 
 grpcServer(); // Start the gRPC server
 
+ 
+  
 
-
-
-// index.ts
-import { kafkaConfig } from './ENV-Configs/KafkaConfig';
+import KafkaController from "./Controllers/Kafka.controller";
+import { kafkaConfig } from "./ENV-Configs/KafkaConfig";
 export interface OrderEventData {
   userId: string;
-  tutorId: string;
-  courseId: string;
-  transactionId: string;
-  title: string;
-  thumbnail: string;
-  price: string;
+  tutorId: string; 
+  courseId: string; 
+  transactionId: string; 
+  title: string; 
+  thumbnail: string; 
+  price: string;  
   adminShare: string; 
-  tutorShare: string;
-  paymentStatus:boolean;
+  tutorShare: string;  
+  paymentStatus:boolean; 
   timestamp: Date;
   status: string;
 }
 
 const event: OrderEventData = {
-  transactionId: 'data.transactionId',
-  userId: "data.userId",
+  transactionId: '66ea78665e6e3a29f1527107',
+  userId: "66ea78665e7e3a29f1527107",
   tutorId: "data.tutorId",
-  courseId: "data.courseId",
+  courseId: "66ed5a17f1e073986aa7a0d6",
   title: "data.title",
   thumbnail: "data.thumbnail",
   price: "data.price",
@@ -120,12 +121,20 @@ const event: OrderEventData = {
   paymentStatus:true, 
   timestamp: new Date(),
   status: "SUCCESS"
-};
+}; 
 app.use(express.json());
 
 
 const PORT = configs.PORT || 3007;  
 app.listen(PORT, async() => {
+const kafkaController = new KafkaController();
+
   console.log(`Payment service running on port ${PORT}`); 
-  // await kafkaConfig.sendMessage('payment.success',  event);  
-});           
+  
+  // kafkaController.createTopic('trial1',2);
+  // kafkaController.publishMessageToTopic("trial1", [{ value: 'this is a trial message from topic trial1' }]);
+                                  
+  // kafkaController.consumerMessageFromTopic("trial1");
+
+  await kafkaConfig.sendMessage('payment.success',  event);  
+});                

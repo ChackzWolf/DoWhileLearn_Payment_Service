@@ -1,32 +1,28 @@
-interface TransactionMessage {
-  transactionId: string;
-  status: string;
-  // Add any other fields you expect in the message
-}
 
 
-import { Kafka, Producer, Consumer, KafkaMessage} from 'kafkajs';
+// utils/kafka.ts
+import { config } from 'dotenv';
+import { Kafka, Producer, Consumer, KafkaMessage } from 'kafkajs';
 import { configs } from './ENV.configs';
-
-interface KafkaConsumerConfig {
-  groupId: string;
-  topics: string[];
-  messageHandler: (message: KafkaMessage) => Promise<void>;
-  maxRetries?: number;
-  retryDelay?: number;
-} 
+import { OrderEventData } from '../Services/Payment.service';
 
 export class KafkaConfig {
   private kafka: Kafka;
   private producer: Producer | null = null;
-  private consumers: Map<string, Consumer> = new Map();
+  private consumer: Consumer | null = null;
   private static instance: KafkaConfig;
 
-  private constructor() {
+  private constructor() { 
     this.kafka = new Kafka({
       clientId: configs.CLIENT_ID,
       brokers: [configs.BROKER_1],
-  });
+      retry: {
+        maxRetryTime: 60000, // 60 seconds
+
+      },
+      connectionTimeout: 10000, // 10 seconds
+      requestTimeout: 25000, // 25 seconds
+    });
   }
 
   public static getInstance(): KafkaConfig {
@@ -36,135 +32,123 @@ export class KafkaConfig {
     return KafkaConfig.instance;
   }
 
-  
-
-  async createTopic(topicName:string, noOfPartition: number) {
-    try {
-
-        const admin = this.kafka.admin();
-        await admin.connect();
-        await admin.createTopics({
-            topics: [{
-                topic: topicName,
-                numPartitions: noOfPartition,
-                replicationFactor: 1, 
-            }],
-        });
-        await admin.disconnect();
-
-        console.log("Topic successfully created.")
-    } catch (error) {
-        console.log('Failed to create topic.')
+  async getProducer(): Promise<Producer> {
+    if (!this.producer) {
+      this.producer = this.kafka.producer();
+      await this.producer.connect();
     }
-}
-
-
-  async sendMessage(topicName:string, message:any){
-    const producer = this.kafka.producer();
-    try {
-        await producer.connect();
-        console.log(message)
-        await producer.send({
-            topic: topicName,
-            messages: [{ value: JSON.stringify(message) }],
-        })
-        console.log('message has send');
-    } catch (error) {
-        console.log('error, error, error', error)
-    } finally{ 
-        await producer.disconnect()
-    } 
-  }   
-  
-  async consumeMessages(topicName:string){
-    const consumer = this.kafka.consumer({groupId:'test-group'});
-    try {
-        await consumer.connect();  
-        await consumer.subscribe({ 
-            topic:topicName, 
-            fromBeginning:true,  
-        })    
-
-        await consumer.run({
-            eachMessage: async ({
-                topic,
-                partition,
-                message
-            })=>{
-                const value = `Recieved message: ${message.value?.toString()} from partition. & topic ${topic}`;
-                console.log(value);
-            }
-    })
-    } catch (error) {
-        
-    }
-}/////
-
-
-// async getProducer(): Promise<Producer> {
-  //   if (!this.producer) {
-  //     this.producer = this.kafka.producer();
-  //     await this.producer.connect();
-  //   }
-  //   return this.producer;
-  // }
+    return this.producer;
+  }
 
   // async getConsumer(groupId: string): Promise<Consumer> {
-  //   if (!this.consumers.has(groupId)) {
-  //     const consumer = this.kafka.consumer({ groupId });
-  //     await consumer.connect();
-  //     this.consumers.set(groupId, consumer);
+  //   if (!this.consumer) {
+  //     this.consumer = this.kafka.consumer({ groupId });
+  //     await this.consumer.connect();
   //   }
-  //   return this.consumers.get(groupId)!;
+  //   return this.consumer;
   // }
 
-  ////
+  async sendMessage(topic: string, message: any): Promise<void> {
+    try {
+      const producer = await this.getProducer();
+      await producer.send({
+        topic,
+        messages: [{ value: JSON.stringify(message) }]
+      });
+      console.log(`Message sent to topic ${topic}:`, message);
+    } catch (error) {
+      console.error(`Error sending message to ${topic}:`, error);
+      
+      throw error;
+    }
+  }
 
+  public async handlePaymentTransaction(event: OrderEventData) {
+    try {
+      // Send payment success message
+      await this.sendMessage('payment.success', event);
+      console.log('Payment success event sent:', event);
+  
+      // Wait for saga completion message
+      const sagaResponse = await this.consumeMessages('payment.saga.completed', event.transactionId);
+      console.log('Saga completion received:', sagaResponse);
+  
+      return sagaResponse;
+    } catch (error) {
+      console.error('Error in payment transaction:', error);
+      throw error;
+    }
+  }
 
-  // async consumeMessages(
-  //     groupId: string,
-  //     topics: string[],
-  //     messageHandler: (message: KafkaMessage) => Promise<void>
-  // ):  Promise<void>{
-  //   // const { groupId, topics, messageHandler, maxRetries = 3, retryDelay = 1000 } = config;
-  //   const maxRetries = 3
-  //   const retryDelay = 1000
-  //   try {
-  //     const consumer = await this.getConsumer(groupId);
-  //     await Promise.all(topics.map((topic) => consumer.subscribe({ topic })));
+  
+  private readonly DEFAULT_TIMEOUT = 35000; // 35 seconds timeout
 
-  //     await consumer.run({
-  //       eachMessage: async ({ topic, partition, message }) => {
-  //         console.log(`Received message from topic ${topic}:`, message.value?.toString());
-  //         let retryCount = 0;
-  //         let processed = false;
-
-  //         while (!processed && retryCount < maxRetries) {
-  //           try {
-  //             await messageHandler(message);
-  //             processed = true;
-  //           } catch (error :any) {
-  //             if (error.message === 'The group is rebalancing, so a rejoin is needed') {
-  //               console.warn(`Retrying message from topic ${topic} due to rebalancing (attempt ${retryCount + 1}/${maxRetries})`);
-  //               await new Promise((resolve) => setTimeout(resolve, retryCount * retryDelay));
-  //               retryCount++;
-  //             } else {
-  //               console.error(`Error processing message from topic ${topic}:`, error);
-  //               processed = true;
-  //             }
-  //           }
-  //         }
-
-  //         if (!processed) {
-  //           console.error(`Failed to process message from topic ${topic} after ${maxRetries} retries`);
-  //         }
-  //       },
-  //     });
-  //   } catch (error) {
-  //     console.error('Error consuming messages:', error);
-  //     throw error;
-  //   }
-  // }
+  private async getConsumer(groupId: string): Promise<Consumer> {
+    if (!this.consumer) {
+      this.consumer = this.kafka.consumer({
+        groupId,
+        sessionTimeout: 30000,
+        heartbeatInterval: 3000
+      });
+      await this.consumer.connect();
+    }
+    return this.consumer;
+  }
+  
+  public async consumeMessages(topicName: string, transactionId: string): Promise<any> {
+    const consumer = await this.getConsumer('payment-saga-participant-group');
+  
+    const message = await new Promise<any>((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error(`Timeout waiting for message with transactionId: ${transactionId}`));
+      }, this.DEFAULT_TIMEOUT);
+  
+      let messageReceived = false;
+  
+      const messageHandler = async ({ topic, partition, message }: { topic: string; partition: number; message: any }) => {
+        try {
+          const value = JSON.parse(message.value?.toString() || '{}');
+          console.log('Received message:', value);
+  
+          if (value.transactionId === transactionId) {
+            console.log('transaction matched');
+            messageReceived = true;
+            clearTimeout(timeout);
+            console.log('sending to resove', value)
+            resolve(value);
+          }
+        } catch (error) {
+          console.error('Error processing message:', error);
+          clearTimeout(timeout);
+          reject(error);
+        }
+      };
+  
+      consumer.subscribe({
+        topic: topicName,
+        fromBeginning: true
+      });
+  
+      consumer.run({
+        eachMessage: messageHandler
+      }).catch((error) => {
+        clearTimeout(timeout);
+        reject(error);
+      });
+  
+      // Reject the promise if no message is received after the timeout
+      setTimeout(async() => {
+        if (!messageReceived) {
+          await consumer.stop();
+          reject(new Error(`Timeout waiting for message with transactionId: ${transactionId}`));
+        }
+      }, this.DEFAULT_TIMEOUT);
+    }
+    
+    );
+    console.log('message',message)
+    return message
+  }
 }
 
-export const kafkaConfig = KafkaConfig.getInstance();   
+export const kafkaConfig = KafkaConfig.getInstance();

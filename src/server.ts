@@ -106,35 +106,32 @@ export interface OrderEventData {
   paymentStatus:boolean; 
   timestamp: Date;
   status: string;
-}
+} 
 
 const event: OrderEventData = {
-  transactionId: '66ea78665e6e3a29f1527107',
+  transactionId: '66ka779q1e683ad9f152742',
   userId: "66ea78665e7e3a29f1527107",
   tutorId: "data.tutorId",
   courseId: "66ed5a17f1e073986aa7a0d6",
   title: "data.title",
   thumbnail: "data.thumbnail",
   price: "data.price",
-  adminShare: "data.adminShare", 
-  tutorShare: "data.tutorShare",
+  adminShare: "100",  
+  tutorShare: "100",
   paymentStatus:true, 
   timestamp: new Date(),
   status: "SUCCESS"
 }; 
 app.use(express.json());
+ 
 
-
-const PORT = configs.PORT || 3007;  
+const PORT = configs.PORT || 3007;
 app.listen(PORT, async() => {
 const kafkaController = new KafkaController();
 
   console.log(`Payment service running on port ${PORT}`); 
-  
-  // kafkaController.createTopic('trial1',2);
-  // kafkaController.publishMessageToTopic("trial1", [{ value: 'this is a trial message from topic trial1' }]);
-                                  
-  // kafkaController.consumerMessageFromTopic("trial1");
 
-  await kafkaConfig.sendMessage('payment.success',  event);  
-});                
+  console.log('agter it')
+  const response = await kafkaConfig.handlePaymentTransaction(event);
+  console.log(response, 'response')
+});                     

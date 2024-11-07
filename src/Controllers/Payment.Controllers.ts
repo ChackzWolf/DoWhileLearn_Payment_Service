@@ -40,20 +40,7 @@ class PaymentController {
         console.log(data, 'data session id')
         const result = await this.orderService.successPayment(data.sessionId);
         console.log(result, 'result from successPayment')
-        const dataToSend = {
-            courseId: result?.courseId,
-            userId: result?.userId,
-            tutorId: result?.tutorId,
-            category: result?.category,
-            thumbnail: result?.thumbnail,
-            title: result?.title,
-            price: result?.price,
-            level: result?.level,
-            totalLessons: result?.totalLessons,
-            transactionId: data.sessionId
-          }
-        console.log(dataToSend, 'data to send')
-        callback(null, dataToSend)
+
     }
 }
 

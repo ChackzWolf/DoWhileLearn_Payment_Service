@@ -5,6 +5,7 @@ dotenv.config();
 import Stripe from "stripe";
 import { configs } from "../ENV-Configs/ENV.configs";
 import { kafkaConfig } from "../ENV-Configs/KafkaConfig";
+import { KafkaConfig } from "kafkajs";
 export interface OrderEventData {
     userId: string;
     tutorId: string;
@@ -23,7 +24,6 @@ const stripe = new Stripe(configs.STRIPE_SECRET_KEY!);
 
 export class OrderService {
 
-    // constructor(private readonly kafkaConfig: KafkaConfig) {}
 
     async createStripeSession(orderData: IOrder) {
         try {
@@ -104,16 +104,25 @@ export class OrderService {
                     timestamp: new Date(),
                     status: "SUCCESS"
                 }
-                await kafkaConfig.sendMessage('payment.success', event)
-                console.log(event, 'order resonse from user case//////////////////////////')
-                return session.metadata;
+            
+                console.log('firtsfirtstfirst')
+                await kafkaConfig.sendMessage('payment.success', event);
+                console.log('order response from user case////////////j//////////////')
+                const response = await kafkaConfig.handlePaymentTransaction(event);
+                if(response.status === 'SUCCESS'){
+                    return {success:true,data:session.metadata}
+                }else{
+                    return {success:false, message:'transaction failed'};
+                }
+     
+
             }
-        } catch (error: any) {
+        } catch (error: any) { 
             console.error('Payment processing failed:', error);
 
             const failureEvent = {
                 transactionId: sessionId,
-                status: 'FAILED',
+                status: 'FAILED',  
                 error: error.message || 'just error',
                 // Include other required fields with default/empty values
                 userId: '',
@@ -149,4 +158,4 @@ export class OrderService {
             // Handle rollback failure
         }
     }
-}
+} 

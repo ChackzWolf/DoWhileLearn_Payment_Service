@@ -10,6 +10,11 @@ message SuccessPaymentRequest {
 } 
 
 message SuccessPaymentResponse {
+    metedata data = 1;
+    bool success = 2;
+    string message = 3;
+}
+message metedata {
     string courseId = 1;
     string userId = 2;
     string tutorId = 3;

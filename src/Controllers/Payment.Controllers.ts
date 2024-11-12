@@ -14,7 +14,6 @@ class PaymentController {
     }
 
     
-
     createStripeSession: handleUnaryCall<IOrder, any> = async (call, callback) => {
         try {
             const orderData: IOrder = call.request;
@@ -39,7 +38,9 @@ class PaymentController {
         const data = call.request;
         console.log(data, 'data session id')
         const result = await this.orderService.successPayment(data.sessionId);
+        
         console.log(result, 'result from successPayment')
+        callback(null,result);
 
     }
 }

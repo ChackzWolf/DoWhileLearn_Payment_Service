@@ -6,6 +6,7 @@ import Stripe from "stripe";
 import { configs } from "../ENV-Configs/ENV.configs";
 import { kafkaConfig } from "../ENV-Configs/KafkaConfig";
 import { KafkaConfig } from "kafkajs";
+import { generateTransactionId } from "../Utils/OrderUtils/TransactionId.generator";
 export interface OrderEventData {
     userId: string;
     tutorId: string;
@@ -83,7 +84,8 @@ export class OrderService {
 
             if (session.payment_status === 'paid' && session.metadata?.price) {
                 const purchasedAmount = parseInt(session.metadata?.price);
-
+                const {tutorId, courseId, userId} = session.metadata;
+                const transactionId = generateTransactionId(tutorId,courseId,userId);
                 const shareForTutor = (purchasedAmount * 0.95).toFixed(2)
                 const shareForAdmin = purchasedAmount - parseInt(shareForTutor);
                 const adminShare = shareForAdmin.toString()
@@ -99,7 +101,7 @@ export class OrderService {
                     price: session.metadata?.price,
                     adminShare,
                     tutorShare,
-                    transactionId: sessionId,
+                    transactionId,
                     paymentStatus: true,
                     timestamp: new Date(),
                     status: "SUCCESS"
@@ -107,11 +109,12 @@ export class OrderService {
             
                 console.log('firtsfirtstfirst')
                 await kafkaConfig.sendMessage('payment.success', event);
-                console.log('order response from user case////////////j//////////////')
                 const response = await kafkaConfig.handlePaymentTransaction(event);
                 if(response.status === 'SUCCESS'){
-                    return {success:true,data:session.metadata}
+                    console.log('triggered success')
+                    return {success:true, data:session.metadata, message:"Payment successful"}
                 }else{
+                    console.log('triggered fail')
                     return {success:false, message:'transaction failed'};
                 }
      
@@ -119,25 +122,7 @@ export class OrderService {
             }
         } catch (error: any) { 
             console.error('Payment processing failed:', error);
-
-            const failureEvent = {
-                transactionId: sessionId,
-                status: 'FAILED',  
-                error: error.message || 'just error',
-                // Include other required fields with default/empty values
-                userId: '',
-                courseId: '',
-                tutorId: '',
-                thumbnail: '',
-                title: '',
-                price: '',
-                adminShare: '',
-                tutorShare: '',
-                paymentStatus: false,
-                timestamp: new Date()
-            };
-            await kafkaConfig.sendMessage('payment.failed', failureEvent);
-            throw error;
+            return {success:false, message:'transaction failed'};
         }
     }
 

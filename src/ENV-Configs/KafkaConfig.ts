@@ -67,7 +67,7 @@ export class KafkaConfig {
     try {
       // Send payment success message
       await this.sendMessage('payment.success', event);
-      console.log('Payment success event sent:', event);
+      console.log('///////////////////Payment success event sent:', event);
   
       // Wait for saga completion message
       const sagaResponse = await this.consumeMessages('payment.saga.completed', event.transactionId);
@@ -95,59 +95,77 @@ export class KafkaConfig {
     return this.consumer;
   }
   
+
+
   public async consumeMessages(topicName: string, transactionId: string): Promise<any> {
     const consumer = await this.getConsumer('payment-saga-participant-group');
-  
-    const message = await new Promise<any>((resolve, reject) => {
-      const timeout = setTimeout(() => {
+    
+    try {
+      const message = await this.waitForMessage(consumer, topicName, transactionId);
+      console.log('Final message received:', message);
+      return message;
+    } finally {
+      // Ensure consumer is always stopped after message is received or timeout occurs
+      await consumer.stop();
+    }
+  }
+
+  private async waitForMessage(consumer: any, topicName: string, transactionId: string): Promise<any> {
+    return new Promise<any>((resolve, reject) => {
+      let timeoutId: NodeJS.Timeout;
+      let isResolved = false;
+
+      const cleanup = async () => {
+        clearTimeout(timeoutId);
+        if (!isResolved) {
+          try {
+            console.log('stoping consumer');
+            await consumer.stop();
+          } catch (error) {
+            console.error('Error stopping consumer:', error);
+          }
+        }
+      };
+
+      // Set up timeout
+      timeoutId = setTimeout(async () => {
+        await cleanup();
         reject(new Error(`Timeout waiting for message with transactionId: ${transactionId}`));
       }, this.DEFAULT_TIMEOUT);
-  
-      let messageReceived = false;
-  
+
       const messageHandler = async ({ topic, partition, message }: { topic: string; partition: number; message: any }) => {
         try {
           const value = JSON.parse(message.value?.toString() || '{}');
           console.log('Received message:', value);
-  
+
           if (value.transactionId === transactionId) {
-            console.log('transaction matched');
-            messageReceived = true;
-            clearTimeout(timeout);
-            console.log('sending to resove', value)
+            console.log('Transaction ID matched:', transactionId);
+            isResolved = true;
+            await cleanup();
             resolve(value);
           }
         } catch (error) {
           console.error('Error processing message:', error);
-          clearTimeout(timeout);
+          await cleanup();
           reject(error);
         }
       };
-  
+
+      // Subscribe to topic
       consumer.subscribe({
         topic: topicName,
         fromBeginning: true
       });
-  
+
+      // Start consuming messages
       consumer.run({
         eachMessage: messageHandler
-      }).catch((error) => {
-        clearTimeout(timeout);
+      }).catch(async (error: Error) => {
+        console.error('Consumer run error:', error);
+        await cleanup();
         reject(error);
       });
-  
-      // Reject the promise if no message is received after the timeout
-      setTimeout(async() => {
-        if (!messageReceived) {
-          await consumer.stop();
-          reject(new Error(`Timeout waiting for message with transactionId: ${transactionId}`));
-        }
-      }, this.DEFAULT_TIMEOUT);
-    }
-    
-    );
-    console.log('message',message)
-    return message
+    });
   }
 }
 

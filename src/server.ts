@@ -129,9 +129,9 @@ const PORT = configs.PORT || 3007;
 app.listen(PORT, async() => {
 const kafkaController = new KafkaController();
 
-  console.log(`Payment service running on port ${PORT}`); 
+  // console.log(`Payment service running on port ${PORT}`); 
 
-  console.log('agter it')
-  const response = await kafkaConfig.handlePaymentTransaction(event);
-  console.log(response, 'response')
+  // console.log('agter it')
+  // const response = await kafkaConfig.handlePaymentTransaction(event);
+  // console.log(response, 'response')
 });                     

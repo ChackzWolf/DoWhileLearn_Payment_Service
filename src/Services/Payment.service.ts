@@ -5,7 +5,6 @@ dotenv.config();
 import Stripe from "stripe";
 import { configs } from "../ENV-Configs/ENV.configs";
 import { kafkaConfig } from "../ENV-Configs/KafkaConfig";
-import { KafkaConfig } from "kafkajs";
 import { generateTransactionId } from "../Utils/OrderUtils/TransactionId.generator";
 export interface OrderEventData {
     userId: string;

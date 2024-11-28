@@ -20,9 +20,6 @@ app.options('*', cors());  // Allow preflight requests
 
 app.use(express.json());
 
-
-
-
 dotenv.config()
 
 

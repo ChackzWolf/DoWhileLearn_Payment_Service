@@ -75,8 +75,9 @@ export class OrderService {
     }
 
     async successPayment(sessionId: string) {
+        const session = await stripe.checkout.sessions.retrieve(sessionId);
         try {
-            const session = await stripe.checkout.sessions.retrieve(sessionId);
+
 
             console.log(session, 'this is session')
 
@@ -114,14 +115,14 @@ export class OrderService {
                     return {success:true, data:session.metadata, message:"Payment successful"}
                 }else{
                     console.log('triggered fail')
-                    return {success:false, message:'transaction failed'};
+                    return {success:false, message:'transaction failed', data:session.metadata};
                 }
      
 
             }
         } catch (error: any) { 
             console.error('Payment processing failed:', error);
-            return {success:false, message:'transaction failed'};
+            return {success:false, message:'transaction failed', data:session.metadata};
         }
     }
 
@@ -129,7 +130,7 @@ export class OrderService {
         try {
             // Implement refund logic using Stripe
             await stripe.refunds.create({
-                payment_intent: transactionId,
+                payment_intent: transactionId, 
                 reason: 'requested_by_customer',
             });
 

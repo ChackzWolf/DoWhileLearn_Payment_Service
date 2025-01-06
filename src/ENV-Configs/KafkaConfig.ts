@@ -143,7 +143,7 @@ export class KafkaConfig {
         readUncommitted: false  // Instead of autoOffsetReset
       });
       await this.consumer.connect();
-    }
+    } 
     return this.consumer;
   }
   

@@ -122,7 +122,7 @@ export class OrderService {
             }
         } catch (error: any) { 
             console.error('Payment processing failed:', error);
-            return {success:false, message:'transaction failed', data:session.metadata};
+            return  {success:false, message:'transaction failed', data:session.metadata};
         }
     }
 

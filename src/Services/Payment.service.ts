@@ -20,14 +20,15 @@ export interface OrderEventData {
     timestamp: Date;
     status: string;
 }
-const stripe = new Stripe(configs.STRIPE_SECRET_KEY!);
+const stripeKey = configs.STRIPE_SECRET_KEY.trim();
 
+const stripe = new Stripe('sk_test_51Q2uOlLl31dHADyAIlfKE3H5ksFBwtrP3cY9ZtbwQBF4j3cfwgy6TGf9Jn1ubYOvjN3phqXY2x3EnHUQBEBTRxk500ijhjEbkQ');
 export class OrderService {
 
 
     async createStripeSession(orderData: IOrder) {
         try {
-            console.log('Reached use case for purchasing order');
+            console.log('Reached use case for purchasing order', stripeKey);
             console.log(orderData, 'orderdatatata')
             // Encode the thumbnail URL to ensure it's valid for Stripe
             const encodedThumbnail = encodeURI(orderData.thumbnail);
@@ -75,6 +76,7 @@ export class OrderService {
     }
 
     async successPayment(sessionId: string) {
+        console.log(sessionId, 'this is session 1')
         const session = await stripe.checkout.sessions.retrieve(sessionId);
         try {
 
@@ -140,7 +142,6 @@ export class OrderService {
             });
         } catch (error) {
             console.error('Payment rollback failed:', error);
-            // Handle rollback failure
         }
     }
 } 

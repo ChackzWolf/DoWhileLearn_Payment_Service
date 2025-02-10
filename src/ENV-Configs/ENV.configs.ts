@@ -18,6 +18,6 @@ export const configs = {
 
     //KAFKA CONFIGS
     CLIENT_ID: process.env.CLIENT_ID || 'nodejs-kafka',
-    BROKER_1: process.env.BROKER_1 || 'localhost:9092'
+    BROKER_1: process.env.BROKER_1 || 'education-kafka.dowhilelearn.svc.cluster.local:29092'
 }
 

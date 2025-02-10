@@ -10,7 +10,7 @@ const logger = debug('node-kafka:KafkaController');
 class KafkaController {
     private kafka: Kafka;
 
-    constructor() {
+    constructor() { 
         this.kafka = new Kafka({
             clientId: configs.CLIENT_ID,
             brokers: [configs.BROKER_1],

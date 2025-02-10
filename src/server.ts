@@ -2,7 +2,7 @@ import dotenv from "dotenv";
 import * as grpc from "@grpc/grpc-js";
 import * as protoLoader from "@grpc/proto-loader";
 import path from "path";
-import OrderController  from "./Controllers/Payment.controllers";
+import PaymentController  from "./Controllers/Payment.Controllers";
 import express from "express"
 import morgan from 'morgan';
 import winston from 'winston';
@@ -49,7 +49,7 @@ const logger = winston.createLogger({
 // error log end
 
 const packageDefinition = protoLoader.loadSync(
-    path.join(__dirname, "Protos/Payment.proto"),
+    path.join(__dirname, "protos/Payment.proto"),
     {keepCase:true , longs: String, enums: String , defaults: true, oneofs: true}
 )
 
@@ -75,7 +75,7 @@ const grpcServer = async () => {
 };
 
 // Controller instantiation
-const controller = new OrderController();
+const controller = new PaymentController();
 
 // Register the service with the controller
 server.addService(paymentProto.PaymentService.service, {
@@ -125,10 +125,4 @@ app.use(express.json());
 const PORT = configs.PORT || 3007;
 app.listen(PORT, async() => {
 const kafkaController = new KafkaController();
-
-  // console.log(`Payment service running on port ${PORT}`); 
-
-  // console.log('agter it')
-  // const response = await kafkaConfig.handlePaymentTransaction(event);
-  // console.log(response, 'response')
 });                     

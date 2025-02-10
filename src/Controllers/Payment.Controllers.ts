@@ -38,7 +38,6 @@ class PaymentController {
         const data = call.request;
         console.log(data, 'data session id')
         const result = await this.orderService.successPayment(data.sessionId);
-        
         console.log(result, 'result from successPayment')
         callback(null,result);
 

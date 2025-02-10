@@ -48,58 +48,6 @@ export class KafkaConfig {
   }
 
 
-
-  // async getConsumer(groupId: string): Promise<Consumer> {
-  //   if (!this.consumer) {
-  //     this.consumer = this.kafka.consumer({ groupId });
-  //     await this.consumer.connect();
-  //   }
-  //   return this.consumer;
-  // }
-
-  // async sendMessage(
-  //   topic: string,
-  //   message: any,
-  //   attempt: number = 1
-  // ): Promise<void> {
-  //   try {
-  //     const producer = await this.getProducer();
-      
-  //     const kafkaMessage = {
-  //       key: message.transactionId,
-  //       value: JSON.stringify(message),
-  //       headers: {
-  //         'idempotency-key': message.transactionId,
-  //         'attempt': attempt.toString(),
-  //         'timestamp': Date.now().toString(),
-  //       }
-  //     };
-
-  //     await producer.send({
-  //       topic,
-  //       messages: [kafkaMessage],
-  //       acks: -1, // Wait for all replicas to acknowledge
-  //     });
-
-  //     console.log(`Message sent successfully to topic ${topic}:`, {
-  //       transactionId: message.transactionId,
-  //       attempt
-  //     });
-  //   } catch (error) {
-  //     console.error(`Error sending message to ${topic}:`, error);
-
-  //     if (attempt < 3) {
-  //       console.log(`Retrying message send (attempt ${attempt + 1}/${3})`);
-  //       await this.delay(3000 * attempt); // Exponential backoff
-  //       return this.sendMessage(topic, message, attempt + 1);
-  //     }
-
-  //     throw new Error(
-  //       `Failed to send message after ${3} attempts: ${error}`
-  //     );
-  //   }
-  // }
-
   async sendMessage(topic: string, message: any): Promise<void> {
     try {
       const producer = await this.getProducer();

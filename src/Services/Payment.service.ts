@@ -48,8 +48,8 @@ export class OrderService {
                     },
                 ],
                 mode: 'payment',
-                success_url: `http://localhost:5173/user/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-                cancel_url: `http://localhost:5173//user/payment/failed?courseID{orderData.courseId}`,
+                success_url: `https://dowhilelearn.tech/user/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+                cancel_url: `http://dowhilelearn.tech//user/payment/failed?courseID{orderData.courseId}`,
                 metadata: {
                     userId: orderData.userId,  // Example of extra value
                     courseId: orderData.courseId, // Another example

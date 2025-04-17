@@ -21,7 +21,7 @@ export class KafkaConfig {
 
       },
       connectionTimeout: 10000, // 10 seconds
-      requestTimeout: 25000, // 25 seconds
+      requestTimeout: 25000, 
     });
   }
 
